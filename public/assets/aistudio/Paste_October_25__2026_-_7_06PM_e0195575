@@ -1,0 +1,774 @@
+# MASTER PROJECT COMPLETION PROMPT — AUTHENTIX / EduVerify-AI
+## Smart India Hackathon 2026 | Problem Statement SIH26261
+
+Act as a **senior full-stack engineer, AI/ML engineer, software architect, security engineer, QA engineer, and DevOps engineer**. Your task is to inspect, repair, complete, test, and document my existing project, **AUTHENTIX / EduVerify-AI**, until it becomes a reliable, runnable, end-to-end demonstration of the proposed solution.
+
+Do not stop after giving advice, generating a plan, or improving the UI. Work directly in the existing repository wherever your environment permits, implement the necessary changes, run the available checks, fix failures, and report the actual results.
+
+---
+
+# 1. PROJECT CONTEXT
+
+**Project name:** AUTHENTIX — An Evidence-Linked, Explainable AI Trust Layer for AICTE Approvals
+
+**SIH 2026 problem statement ID:** SIH26261
+
+**Problem statement:** AI-Powered Application Validation, Documentation Authentication and Regulatory Compliance Verification
+
+**Theme:** Smart Automation
+
+**Category:** Software
+
+### Problem we are solving
+
+Manual scrutiny of high volumes of AICTE applications is time-consuming and repetitive. Officers may encounter:
+
+- Missing, expired, inconsistent, or incorrectly formatted documents.
+- Altered documents, duplicated files, and suspicious document metadata.
+- Differences between submitted information and institutional records.
+- Repeated manual verification with issuing authorities.
+- Difficulties prioritising applications that require closer inspection.
+- Low-quality scans, handwritten content, and Hindi/English documents.
+- Changing regulatory requirements and approval-handbook checklists.
+
+### Our proposed solution
+
+Build an application that helps authorised officers upload and review applications, extract information from documents, validate required fields against configurable rules, identify potential anomalies, record source-verification outcomes, and generate explainable findings with supporting evidence.
+
+The system must assist officers rather than replace them.
+
+**Non-negotiable principle:** No AI-generated score, anomaly, or verification failure may automatically reject an institution or make a final adverse regulatory decision. Human officers retain final decision-making authority.
+
+---
+
+# 2. FIRST: AUDIT THE EXISTING PROJECT
+
+Before modifying anything, inspect the entire repository.
+
+Use the latest project version available in the workspace. If both the original and updated archives are available, compare them and work from the most complete version. Do not overwrite newer work with older code.
+
+Inspect:
+
+- Frontend structure, routes, pages, forms, components, and API calls.
+- Backend entry points, controllers, services, middleware, and API routes.
+- Database schema, migrations, seed scripts, and persistence.
+- Authentication, session or token handling, and authorisation.
+- Document upload, validation, storage, OCR, and hashing.
+- Application review and manual-verification workflows.
+- AI and anomaly-detection modules.
+- Tests, configuration files, environment variables, Docker files, and README.
+- Existing mock data, placeholder functions, TODOs, hardcoded results, and incomplete features.
+
+Produce a concise internal checklist of what is implemented, partially implemented, broken, or missing. Then continue directly into implementation; do not wait for me to approve the audit.
+
+### Existing audit findings that must be rechecked
+
+Earlier static inspection identified possible problems:
+
+1. Seeded user password hashes may be incompatible with the current scrypt password-verification implementation.
+2. The configured OCR port may differ from the port documented in the README.
+3. The Windows launch script may use `python3` incorrectly or fail to report service startup errors.
+4. Manual verification outcomes may modify an in-memory object without persisting the result to the database.
+5. Fresh database setup, migrations, and demo-user seeding may be incompletely documented.
+6. Full application builds and tests have not yet been confirmed.
+
+These are leads, not assumptions about the current state. Reproduce each issue before fixing it and check for related problems.
+
+**Preserve existing working features, useful UI, API contracts, and the established project structure wherever practical.** Do not rewrite the application from scratch merely because a different architecture seems preferable.
+
+---
+
+# 3. ARCHITECTURE AND TECHNOLOGY RULES
+
+The project has an existing implementation and a proposed SIH architecture. Inspect the actual code before deciding which technology belongs where.
+
+The proposed architecture includes:
+
+- Frontend: React and Tailwind CSS.
+- Backend: existing application API, with Python FastAPI/Celery where appropriate for document-processing services.
+- OCR and document understanding: PaddleOCR or Tesseract, with layout-aware extraction such as LayoutLMv3 where feasible.
+- Image processing and anomaly detection: OpenCV, PyTorch, and Isolation Forest where appropriate.
+- Database: PostgreSQL.
+- Institution relationship data: Neo4j if genuinely needed and supported by the existing implementation.
+- Background tasks and caching: Redis/Celery if required.
+- Document storage: the existing storage layer, with MinIO or another compatible object store if justified.
+- Security: role-based access control, encrypted transport, secure password hashing, and tamper-evident audit logs.
+- Deployment: Docker Compose initially; Kubernetes only if the project needs it.
+
+### Rules for technology selection
+
+- Keep the existing backend framework if it already provides the required functionality.
+- Do not create a second backend just to match a proposed diagram.
+- Add a separate Python OCR/AI service only when it integrates cleanly with the existing backend.
+- Avoid unnecessary dependencies, microservices, or infrastructure that make the demo harder to run.
+- Do not require paid APIs or proprietary services for the basic demonstration.
+- Do not claim that a model, database, external API, or security feature works until it has been implemented and tested.
+- If a proposed technology cannot reasonably be integrated within the project, document the limitation and provide a practical alternative.
+
+---
+
+# 4. COMPLETE THE FRONTEND
+
+Inspect the current UI and finish all existing screens. Maintain a professional, consistent, accessible design appropriate for a government regulatory review platform.
+
+Implement or complete the following screens, reusing existing components wherever possible.
+
+## A. Authentication
+
+- Login page with clear validation and error messages.
+- Secure handling of sessions or tokens.
+- Logout and session expiry handling.
+- Loading, empty, success, and failure states.
+- No hardcoded credentials or frontend-only authentication.
+
+## B. Dashboard
+
+Show real data from the backend, including:
+
+- Total applications.
+- Applications awaiting review.
+- Verified applications or documents.
+- Applications with missing or expired documents.
+- Applications with mismatches or potential anomalies.
+- Verification-pending applications.
+- Recent activity and review status.
+
+Dashboard statistics must be calculated from persisted data, not invented numbers.
+
+## C. Application management
+
+- List and search applications.
+- Filter by status, institution, category, and review priority.
+- Open an application detail page.
+- View applicant/institution information and submitted documents.
+- Show timestamps and review history.
+- Support pagination if necessary.
+- Provide useful empty states when no applications exist.
+
+## D. Document upload
+
+- Allow authorised users to upload supported document formats.
+- Validate file type, file size, and file contents.
+- Show upload progress or processing status.
+- Display clear validation errors.
+- Prevent unsafe filenames, path traversal, and unauthorised access.
+- Display the stored document metadata and processing status.
+
+## E. Document review
+
+For each document, display:
+
+- Document type and extracted fields.
+- OCR confidence where available.
+- Required-field and expiry checks.
+- Mismatched values.
+- Potential duplicates or tampering indicators.
+- Verification status.
+- Supporting evidence and explanation for each flag.
+- Processing errors and next steps.
+
+Where feasible, display the document image or PDF next to its extracted fields and findings.
+
+## F. Verification and officer review
+
+Provide controls for authorised officers to:
+
+- Mark a document or field as verified after review.
+- Record a mismatch or missing evidence.
+- Request clarification or additional documents.
+- Record manual source-verification results.
+- Add a review note.
+- Reopen a case where permissions allow.
+- View the history of previous actions.
+
+Every action must call the backend and persist its result. Do not make buttons that only change frontend state.
+
+## G. Reports and audit history
+
+- Display application validation reports.
+- Provide an application-level summary of findings.
+- Show evidence, timestamps, responsible users, and rule versions.
+- Allow authorised users to export a useful report, preferably PDF or CSV where practical.
+- Ensure exports accurately reflect persisted records.
+
+Do not invent results when backend data is unavailable.
+
+---
+
+# 5. IMPLEMENT A RELIABLE BACKEND
+
+Complete the existing API architecture and integrate the frontend with it.
+
+Use the project's existing conventions and establish consistent request validation, response formats, error handling, logging, and authorisation.
+
+Implement or complete equivalent endpoints for:
+
+- Authentication and logout.
+- Current-user/profile information.
+- Application creation, listing, details, and updates.
+- Document upload and secure retrieval.
+- Document metadata and extracted fields.
+- Validation findings and reports.
+- Source-verification attempts and results.
+- Manual officer decisions and review notes.
+- Audit-log retrieval.
+- Dashboard statistics.
+- Health checks for the backend and dependent services.
+
+Use appropriate HTTP status codes. Never return successful responses for failed operations.
+
+### Persistence requirements
+
+- Persist all important application, document, validation, verification, and review records.
+- Use database transactions where multiple changes must succeed together.
+- Implement proper foreign keys, indexes, uniqueness constraints, and timestamps.
+- Ensure manual verification results remain present after restarting the application.
+- Ensure dashboard counts are consistent with database records.
+- Use migrations for schema changes.
+- Make database initialisation and demo-data seeding reproducible.
+- Do not silently fall back to volatile in-memory storage in a way that makes a production-like demo appear persistent.
+
+If an optional development fallback exists, label it clearly and never claim it provides durable persistence.
+
+---
+
+# 6. AUTHENTICATION, AUTHORISATION, AND SECURITY
+
+Treat security as part of the implementation, not a future enhancement.
+
+Implement and test:
+
+- Secure password hashing using the project's supported password-verification algorithm.
+- Correct login verification for seeded demo accounts.
+- Server-side authentication on protected routes.
+- Role-based access control enforced by the backend.
+- Institution-level data isolation wherever required.
+- Secure session/token creation, expiry, validation, and logout behaviour.
+- Protection against unauthorised document access.
+- Input validation and parameterised database queries.
+- Safe upload handling and restricted file types.
+- Appropriate CORS configuration.
+- Secrets supplied through environment variables rather than committed source code.
+- Redaction of passwords, tokens, and sensitive document contents from logs.
+- Rate limiting or equivalent protection on sensitive endpoints where practical.
+- Audit records for important security and review actions.
+
+Use TLS in deployed environments and encryption at rest where supported by the deployment.
+
+If cookie-based sessions are used, configure secure cookie attributes and appropriate CSRF protection. If bearer tokens are used, validate them server-side and avoid insecure storage patterns.
+
+Never hardcode a secret key, production password, or API credential into source code.
+
+Provide an `.env.example` containing placeholder values only.
+
+---
+
+# 7. DOCUMENT PROCESSING AND OCR
+
+Implement a real document-processing pipeline using the project's existing OCR integration wherever possible.
+
+The expected pipeline is:
+
+1. Receive and securely store the uploaded document.
+2. Calculate a SHA-256 content hash.
+3. Check file type and content integrity.
+4. Extract text using an available OCR or PDF-text extraction engine.
+5. Preserve page numbers and bounding-box or region information when available.
+6. Identify likely document type.
+7. Extract relevant fields.
+8. Record confidence and processing status.
+9. Validate the extracted data against configured rules.
+10. Save results and evidence to the database.
+11. Return the findings to the frontend.
+
+Support digital PDFs and scanned documents. Provide a clear path for image-based OCR. Hindi/English extraction should be supported to the extent the selected OCR engine and installed language data allow.
+
+### Important implementation rules
+
+- Distinguish OCR extraction from field extraction and regulatory validation.
+- Do not silently treat OCR failure as a valid document.
+- Preserve the original uploaded file.
+- Store derived extraction results separately from the original document.
+- Record the OCR engine and processing timestamp where practical.
+- Send low-confidence fields for human review.
+- If OCR is unavailable, report the service as unavailable or processing as incomplete.
+- Do not fabricate extracted values.
+- Do not claim support for handwriting, Hindi, or a document type unless it has been tested.
+- Handle large PDFs and processing timeouts safely.
+
+Make the OCR service configuration consistent across code, environment files, Docker configuration, health checks, and documentation. Fix the earlier suspected port mismatch after verifying the actual configuration.
+
+---
+
+# 8. REGULATORY VALIDATION ENGINE
+
+Implement a configurable rules engine for application and document checks.
+
+Examples of checks include:
+
+- Required document present or missing.
+- Expiry date and validity period.
+- Required fields missing.
+- Institution details inconsistent across documents.
+- Application fields inconsistent with available institutional records.
+- Invalid date formats or impossible values.
+- Duplicate document hashes.
+- Duplicate or suspicious extracted identifiers.
+- Document type inconsistent with its expected fields.
+- Rule-specific conditions for the relevant application category.
+
+### Rule-engine requirements
+
+Each finding should include, where applicable:
+
+- A unique finding ID.
+- The application and document involved.
+- The field or page/region involved.
+- The rule ID and rule version.
+- Expected and observed values.
+- Severity or review priority.
+- A plain-language explanation.
+- Evidence supporting the finding.
+- Processing timestamp.
+- Whether human review is required.
+
+Use versioned, configurable rules rather than hardcoding every requirement into frontend code.
+
+Do not invent official AICTE regulations. Separate verified, authoritative rules from illustrative demonstration rules. Where the applicable handbook or rule has not been confirmed, label it as a configurable example requiring authorised review.
+
+The system must support updating rules without rewriting the entire application.
+
+---
+
+# 9. DOCUMENT AUTHENTICATION AND ANOMALY DETECTION
+
+Implement practical, testable authentication and anomaly-detection capabilities.
+
+## A. Cryptographic integrity
+
+- Calculate SHA-256 hashes of uploaded file contents.
+- Detect exact duplicate files by hash.
+- Store the hash with document metadata.
+- Never treat a matching hash alone as proof that a document was issued by an official authority.
+
+## B. Possible tampering
+
+Where feasible, implement or integrate:
+
+- Image and PDF metadata inspection.
+- Suspicious page or content inconsistencies.
+- Image-based alteration indicators.
+- Copy-move or duplicate-region analysis where practical.
+- Error-level analysis for suitable images, with its limitations clearly documented.
+- Anomaly detection for unusual extracted-field patterns.
+
+An anomaly score must be described as an indicator for investigation, not proof of fraud.
+
+Use deterministic checks and a clearly defined baseline if labelled training data is unavailable. Synthetic examples may be used for demonstration but must be labelled as synthetic.
+
+Do not pretend that a trained forgery-detection model exists if only heuristic checks have been implemented.
+
+## C. Duplicate detection
+
+Distinguish between:
+
+- Exact file duplicates.
+- Potentially duplicate documents with different file encodings or formatting.
+- Similar content that may legitimately appear across applications.
+
+Avoid automatically declaring two documents fraudulent merely because they look similar.
+
+---
+
+# 10. EXPLAINABLE TRUST SCORE
+
+Implement an explainable document/application Trust Score from 0 to 100 only if the scoring logic can be defined and tested.
+
+Requirements:
+
+- Define the scoring factors and their weights.
+- Keep rule violations and source-verification outcomes distinguishable from model-generated anomaly signals.
+- Explain which factors contributed to the score.
+- Show supporting evidence beside each contribution.
+- Handle missing or low-confidence information explicitly.
+- Keep the score reproducible for the same inputs and rule/model versions.
+- Store the calculation version and relevant inputs needed for auditability.
+- Avoid misleading precision and unsupported claims about model confidence.
+
+The score must never be presented as a probability of fraud unless it has been properly calibrated and validated for that interpretation.
+
+**The score is advisory. It must not automatically reject an institution or replace the authorised officer's judgement.**
+
+If a defensible scoring implementation cannot be completed, provide transparent component-level risk indicators and document the limitation rather than inventing an AI score.
+
+---
+
+# 11. SOURCE VERIFICATION
+
+Design a verification adapter that supports authorised verification methods, such as:
+
+1. An official issuer API.
+2. QR-code or digitally signed verification.
+3. A reference-number lookup.
+4. Manual verification by an authorised officer.
+
+For each attempt, record:
+
+- Verification method.
+- Issuer or source.
+- Attempt timestamp.
+- Result.
+- Source response or reference where safe to retain.
+- Error or reason for pending verification.
+- Responsible user for manual checks.
+
+Support the following statuses where applicable:
+
+- Verified.
+- Mismatch detected.
+- Expired.
+- Verification pending.
+- Source unavailable.
+- Manual review required.
+
+Do not fabricate successful external verification. Do not scrape or bypass protected systems. Use only authorised interfaces and credentials.
+
+If an official API is not accessible in the development environment, implement a clearly labelled mock/sandbox adapter with deterministic test fixtures. The UI must identify sandbox results as demonstrations, not real official verification.
+
+---
+
+# 12. AUDITABILITY AND EVIDENCE
+
+Make findings explainable and actions traceable.
+
+Implement an audit history for important events, including:
+
+- Login and security-relevant events where appropriate.
+- Application creation and updates.
+- Document uploads and processing.
+- Rule-based findings.
+- Source-verification attempts.
+- Officer reviews and decisions.
+- Rule configuration changes.
+- Report generation where appropriate.
+
+Each audit event should contain an event ID, timestamp, actor where applicable, action, affected resource, and relevant metadata.
+
+Where appropriate, use hash chaining to make unauthorised alteration of audit events detectable. Define exactly what is included in the hash and verify the chain with a test.
+
+Do not describe a hash-chained log as absolutely tamper-proof. Document its threat model and limitations.
+
+Prevent ordinary users from editing or deleting audit history through normal application APIs.
+
+---
+
+# 13. HUMAN REVIEW AND REGULATORY SAFETY
+
+The workflow must clearly separate automated findings from final decisions.
+
+Example workflow:
+
+**Application submitted → Documents uploaded → OCR/extraction → Rule validation → Anomaly checks → Source verification → Evidence-linked report → Officer review → Recorded decision**
+
+An officer must be able to inspect the supporting evidence, correct extraction errors where authorised, record an explanation, and make the final decision.
+
+Do not automatically reject applications based on:
+
+- A low Trust Score.
+- An anomaly flag.
+- An OCR error.
+- An unavailable issuer API.
+- Missing external connectivity.
+- An unverified document alone.
+
+Such cases must be clearly flagged for further review or additional evidence.
+
+Record the human decision and its rationale separately from automated results.
+
+---
+
+# 14. DATABASE, DEMO DATA, AND TEST ENVIRONMENT
+
+Prepare a reproducible development environment.
+
+Include:
+
+- Database schema and migrations.
+- Reliable database initialisation.
+- Safe demo-user seeding.
+- Synthetic sample institutions and applications.
+- Representative sample documents or fixtures.
+- Missing, expired, inconsistent, duplicate, and suspicious-document test cases.
+- Deterministic mock issuer responses.
+- A way to reset demo data safely.
+
+Never use real confidential student or institutional documents without appropriate authorisation.
+
+Label synthetic demo records clearly. Ensure demo data cannot be confused with actual AICTE decisions or official records.
+
+Document the roles and permissions of each seeded account. Do not include reusable production credentials.
+
+---
+
+# 15. TESTING — REQUIRED, NOT OPTIONAL
+
+Create or repair automated tests at multiple levels.
+
+## A. Backend tests
+
+Test:
+
+- Authentication success and failure.
+- Invalid and expired sessions/tokens.
+- Role-based access control.
+- Institution-level data isolation.
+- Application creation and retrieval.
+- File upload validation.
+- File hash calculation and duplicate detection.
+- OCR success, failure, timeout, and unavailable-service cases.
+- Required-field and expiry rules.
+- Mismatch detection.
+- Source-verification outcomes.
+- Manual review persistence.
+- Audit-log generation and verification.
+- Report generation.
+- Database error handling.
+
+## B. Frontend tests
+
+Test important interactions, including:
+
+- Login and logout.
+- Dashboard loading.
+- Application filtering and navigation.
+- Document upload and validation errors.
+- Display of findings and evidence.
+- Manual verification and review.
+- Error states and unavailable services.
+
+## C. Integration and end-to-end tests
+
+Verify a complete scenario:
+
+1. Start the application and its required services.
+2. Log in as an authorised demo officer.
+3. Create or select a synthetic application.
+4. Upload a valid test document.
+5. Confirm the file is stored and hashed.
+6. Confirm OCR or the explicitly configured test adapter processes it.
+7. Confirm validation findings are persisted.
+8. Confirm the dashboard displays the real status.
+9. Record a manual verification outcome.
+10. Restart the backend and confirm the outcome remains.
+11. Confirm the audit trail records the relevant actions.
+12. Confirm an unauthorised user cannot access protected data.
+13. Confirm the application handles OCR or issuer unavailability without reporting false success.
+
+Run the existing tests as well. Do not delete or weaken existing tests simply to obtain a passing result.
+
+Clearly distinguish tests that ran and passed, tests that failed, and tests that could not run due to unavailable dependencies or infrastructure.
+
+---
+
+# 16. FIX THE DEVELOPER EXPERIENCE
+
+Make the project easy for another developer or SIH evaluator to run.
+
+Provide:
+
+- A complete README.
+- Prerequisites and supported versions.
+- Environment setup instructions.
+- Database creation and migration steps.
+- Demo-user seeding instructions.
+- Frontend startup instructions.
+- Backend startup instructions.
+- OCR/AI service startup instructions.
+- Docker Compose instructions if supported.
+- Windows-specific commands where needed.
+- Troubleshooting for common startup failures.
+- Health-check endpoints and expected results.
+- Test commands.
+- A documented end-to-end demo flow.
+
+Correct the Windows launch script so it uses available executables, starts services reliably, detects startup failures, and reports useful errors.
+
+Check ports and service URLs across the codebase, environment files, scripts, Docker configuration, and README. Avoid contradictory configuration.
+
+Use a clean setup to validate the documented installation steps where possible.
+
+---
+
+# 17. DEPLOYMENT AND OPERATIONS
+
+Provide a practical deployment configuration appropriate for a student hackathon project.
+
+Prefer a working local development environment and Docker Compose configuration over unnecessary production infrastructure.
+
+Where supported, include:
+
+- Frontend service.
+- Backend service.
+- Database service.
+- OCR/AI service.
+- Object storage or other required dependencies.
+- Health checks and service dependencies.
+- Persistent database and document-storage volumes.
+- Environment-based configuration.
+- Restart behaviour and useful logs.
+
+Do not bake secrets into container images. Do not expose internal databases or storage services unnecessarily.
+
+Kubernetes configuration is optional unless required by the existing project. Do not make Kubernetes a prerequisite for the basic demonstration unless the current implementation genuinely depends on it.
+
+---
+
+# 18. PERFORMANCE, RELIABILITY, AND PRIVACY
+
+Inspect for:
+
+- Slow or repeated database queries.
+- Unbounded file uploads or processing.
+- Large PDF memory usage.
+- Blocking OCR operations.
+- Missing timeouts and retries.
+- Duplicate processing jobs.
+- Inconsistent concurrent updates.
+- Sensitive information exposed in logs or error responses.
+- Unauthorised access to application documents.
+- Missing retention and deletion policies.
+
+Use background processing for long-running OCR tasks where appropriate. Ensure processing failures can be retried safely and do not create duplicate findings or inconsistent application states.
+
+Document the privacy assumptions, data-retention behaviour, and limitations of the demo. Do not claim legal or regulatory compliance has been certified merely because security controls are present.
+
+---
+
+# 19. PROJECT QUALITY AND IMPLEMENTATION RULES
+
+Follow these rules throughout the task:
+
+1. Do not stop after inspecting the project; implement the fixes.
+2. Do not rebuild the entire application unless the existing architecture is genuinely unusable.
+3. Do not remove useful existing features to simplify the task.
+4. Do not replace real backend operations with frontend-only mock behaviour.
+5. Do not fabricate OCR output, source-verification results, database records, or AI model performance.
+6. Do not hardcode fake dashboard statistics.
+7. Do not leave critical buttons disconnected from backend actions.
+8. Do not expose secrets or sensitive document contents.
+9. Do not claim tests pass unless you actually ran them.
+10. Do not claim external AICTE or issuer integration works without a real authorised connection and a verified test.
+11. Keep the project understandable and maintainable.
+12. Prefer small, focused changes and reuse existing abstractions.
+13. Preserve the current design where practical, improving consistency rather than replacing everything without reason.
+14. Use meaningful error messages and application logs.
+15. If a requirement is blocked, explain the blocker, implement the safest useful alternative, and continue with the remaining work.
+16. Do not stop to ask me questions that can be answered by inspecting the repository. Ask only when a genuinely essential decision cannot be inferred.
+17. If you have terminal or filesystem access, edit the actual files. If you do not have access to the repository, clearly identify what files or environment access you need.
+
+---
+
+# 20. IMPLEMENTATION ORDER
+
+Work through these phases in order, but continue automatically instead of waiting for approval between phases.
+
+### Phase 1 — Repository audit
+Understand the codebase, architecture, dependencies, existing functionality, and current failures.
+
+### Phase 2 — Startup and configuration
+Fix dependency installation, environment configuration, service startup, ports, migrations, and seed scripts.
+
+### Phase 3 — Core backend
+Fix authentication, authorisation, persistence, API validation, and error handling.
+
+### Phase 4 — Application and document workflows
+Complete uploads, secure storage, document processing, application management, and officer review.
+
+### Phase 5 — OCR and regulatory rules
+Integrate OCR, extraction, configurable validation, evidence-linked findings, and processing-status handling.
+
+### Phase 6 — Authentication and anomaly analysis
+Implement practical integrity checks, duplicate detection, and explainable anomaly indicators. Clearly label limitations.
+
+### Phase 7 — Source verification and audit
+Implement the verification adapter, manual fallback, persistent outcomes, and traceable audit events.
+
+### Phase 8 — Frontend integration
+Connect every required screen to real backend operations. Fix loading, empty, success, and failure states.
+
+### Phase 9 — Testing and bug fixing
+Run unit, integration, and end-to-end tests. Fix regressions and repeat relevant checks.
+
+### Phase 10 — Documentation and delivery
+Complete the README, environment example, launch scripts, demo instructions, and known-limitations documentation.
+
+After each phase, keep a concise record of changes and checks performed, but do not stop after writing that record.
+
+---
+
+# 21. DEFINITION OF DONE
+
+The project is ready for demonstration only when the following have been checked and their actual status reported:
+
+- [ ] The repository installs or builds using documented instructions.
+- [ ] Required services start successfully.
+- [ ] The database initialises and migrations run.
+- [ ] Demo accounts can authenticate using the documented setup.
+- [ ] Backend authorisation prevents unauthorised access.
+- [ ] Applications and documents persist in the database/storage.
+- [ ] File uploads are validated and SHA-256 hashes are stored.
+- [ ] OCR works for the tested formats, or limitations are reported honestly.
+- [ ] Validation rules generate explainable, evidence-linked findings.
+- [ ] Duplicate and anomaly indicators behave as documented.
+- [ ] Source verification distinguishes real integrations from sandbox results.
+- [ ] Manual review outcomes persist after restart.
+- [ ] Audit events are recorded and any implemented hash chain can be verified.
+- [ ] Dashboard figures come from real persisted records.
+- [ ] Important frontend controls perform real operations.
+- [ ] Tests have been run and their results recorded.
+- [ ] No critical startup or runtime errors remain in the tested demo path.
+- [ ] The README explains how to launch and demonstrate the project.
+- [ ] Known limitations are documented.
+- [ ] No feature is falsely presented as complete or officially verified.
+
+If an item cannot be completed, state precisely what remains, why it is blocked, and what evidence supports that conclusion. Do not mark it complete just because code was added.
+
+---
+
+# 22. FINAL RESPONSE REQUIRED
+
+When implementation is finished, provide:
+
+## A. Completion summary
+Explain what now works in simple language.
+
+## B. Architecture
+Describe the actual final frontend, backend, database, OCR/AI, and storage architecture—not merely the intended architecture.
+
+## C. Files changed
+List important files created, modified, or removed and explain why.
+
+## D. Features completed
+Separate genuinely implemented features from simulated, partial, or future features.
+
+## E. Test report
+Provide the commands executed, test counts where available, and actual pass/fail/blocker results.
+
+## F. Run instructions
+Give exact commands to install dependencies, configure the environment, initialise the database, start each service, log in, and run tests. Include Windows instructions if relevant.
+
+## G. End-to-end demo
+Provide a short, reliable sequence that an SIH evaluator can follow to demonstrate the application.
+
+## H. Remaining issues
+List unresolved bugs, external integration requirements, untested paths, security limitations, and any incomplete features.
+
+## I. Final readiness assessment
+Classify the project honestly as:
+- Ready for the tested demonstration path.
+- Partially ready, with identified blockers.
+- Not yet runnable.
+
+Explain the evidence behind the assessment.
+
+**Start now by inspecting the latest project files. Continue through implementation, testing, and documentation without stopping at the planning stage. The goal is a reliable, explainable, secure, end-to-end AUTHENTIX demonstration—not just a collection of screens or an impressive-looking prototype.**

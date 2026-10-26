@@ -1,0 +1,6 @@
+{
+  "name": "AUTHENTIX — Evidence-Linked AICTE Regulatory Verification",
+  "description": "Institutional application scrutiny, document authentication, rule-based compliance validation, and human-in-the-loop officer verification platform.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

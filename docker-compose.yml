@@ -1,0 +1,82 @@
+# AUTHENTIX / EduVerify-AI (SIH26261)
+# Container Deployment Stack (Web/API + Python OCR Microservice)
+# Security: No hard-coded fallback secrets or auto-enabled demo accounts in production.
+# Provide strong 32+ character SESSION_SECRET and QR_SIGNING_SECRET values in .env before running.
+
+services:
+  ocr-service:
+    build:
+      context: .
+      dockerfile: services/ocr_service/Dockerfile
+    container_name: authentix-ocr
+    environment:
+      OCR_SERVICE_HOST: "0.0.0.0"
+      OCR_SERVICE_PORT: "8001"
+    # Bind health/inspection port to loopback only rather than public 0.0.0.0
+    ports:
+      - "127.0.0.1:8001:8001"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8001/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  authentix-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: authentix-app
+    depends_on:
+      ocr-service:
+        condition: service_healthy
+    environment:
+      NODE_ENV: "production"
+      PORT: "3000"
+      OCR_SERVICE_URL: "http://ocr-service:8001"
+      OCR_TIMEOUT_MS: "${OCR_TIMEOUT_MS:-8000}"
+      SQLITE_DB_PATH: "/app/data/authentix.sqlite"
+      UPLOAD_DIR: "/app/data/uploads"
+      SAMPLE_DOCS_DIR: "/app/data/sample_docs"
+      MAX_UPLOAD_MB: "${MAX_UPLOAD_MB:-15}"
+      ENABLE_DEMO_MODE: "${ENABLE_DEMO_MODE:-false}"
+      AUTO_SEED_DEMO_DATA: "${AUTO_SEED_DEMO_DATA:-false}"
+      SESSION_SECRET: "${SESSION_SECRET:?Set a strong 32+ char SESSION_SECRET in .env}"
+      QR_SIGNING_SECRET: "${QR_SIGNING_SECRET:?Set a strong 32+ char QR_SIGNING_SECRET in .env}"
+    ports:
+      - "3000:3000"
+    volumes:
+      - authentix_data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # Optional PostgreSQL 16 schema-validation container (enabled only with: docker compose --profile postgres up -d)
+  # NOTE: The active runtime database adapter is SQLite WAL (/app/data/authentix.sqlite).
+  # db/postgres-schema.sql is reference DDL only — no live PostgreSQL runtime adapter is claimed.
+  postgres-db:
+    image: postgres:16-alpine
+    container_name: authentix-postgres
+    profiles: ["postgres"]
+    environment:
+      POSTGRES_DB: "${POSTGRES_DB:-authentix}"
+      POSTGRES_USER: "${POSTGRES_USER:-authentix_app}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Set a strong POSTGRES_PASSWORD before starting the postgres profile}"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/postgres-schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-authentix_app} -d $${POSTGRES_DB:-authentix}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  authentix_data:
+  postgres_data:
